@@ -1,12 +1,12 @@
 /**
  * @file webserver.c
  * @author wenyi (wenyi0421@163.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-08-27
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 
@@ -114,7 +114,7 @@ static int get_sdcard_info(Webs* wp)
 
     struct statfs hfs = {0};
 	unsigned long long block_size = 0;
-    
+
     if(check_sdcard_mount_status())
     {
         if(statfs(SD_PATH,&hfs))
@@ -123,7 +123,7 @@ static int get_sdcard_info(Webs* wp)
             return -1;
         }
     }
-	
+
 	block_size = hfs.f_bsize;
 	total = (hfs.f_blocks * block_size)>>20;
 	free = (hfs.f_bavail * block_size)>>20;
@@ -166,13 +166,13 @@ static int get_usbmode(Webs* wp)
     cJSON_AddItemToObject(pRoot, "response", pArray);
     cJSON* pItem = NULL;
 
-    
+
     env_usb_t* usb = &(env_get_ctx()->usb);
 
     /*--json body--*/
     pItem = cJSON_CreateObject();
-	cJSON_AddNumberToObject(pItem, "mode", usb->mode);  
-	cJSON_AddNumberToObject(pItem, "node", usb->node);  
+	cJSON_AddNumberToObject(pItem, "mode", usb->mode);
+	cJSON_AddNumberToObject(pItem, "node", usb->node);
     cJSON_AddItemToArray(pArray, pItem);
 
 
@@ -220,10 +220,10 @@ static int get_nodepower(Webs* wp)
 
     /*--json body--*/
     pItem = cJSON_CreateObject();
-	cJSON_AddNumberToObject(pItem, "node1", get_node_power(0));  
-	cJSON_AddNumberToObject(pItem, "node2", get_node_power(1));  
-    cJSON_AddNumberToObject(pItem, "node3", get_node_power(2));  
-	cJSON_AddNumberToObject(pItem, "node4", get_node_power(3));  
+	cJSON_AddNumberToObject(pItem, "node1", get_node_power(0));
+	cJSON_AddNumberToObject(pItem, "node2", get_node_power(1));
+    cJSON_AddNumberToObject(pItem, "node3", get_node_power(2));
+	cJSON_AddNumberToObject(pItem, "node4", get_node_power(3));
     cJSON_AddItemToArray(pArray, pItem);
 
 
@@ -249,10 +249,10 @@ static int get_nodeInfoType(Webs* wp)
 
     /*--json body--*/
     pItem = cJSON_CreateObject();
-	cJSON_AddStringToObject(pItem, "node1", get_nodeType(0));  
-	cJSON_AddStringToObject(pItem, "node2", get_nodeType(1));  
-    cJSON_AddStringToObject(pItem, "node3", get_nodeType(2));  
-	cJSON_AddStringToObject(pItem, "node4", get_nodeType(3));  
+	cJSON_AddStringToObject(pItem, "node1", get_nodeType(0));
+	cJSON_AddStringToObject(pItem, "node2", get_nodeType(1));
+    cJSON_AddStringToObject(pItem, "node3", get_nodeType(2));
+	cJSON_AddStringToObject(pItem, "node4", get_nodeType(3));
     cJSON_AddItemToArray(pArray, pItem);
 
 
@@ -290,7 +290,7 @@ static int get_uartString(Webs* wp)
     /*--json body--*/
     get_buff(num,buff,BUFF_MAX_SIZE);
     pItem = cJSON_CreateObject();
-	cJSON_AddStringToObject(pItem, "uart", buff);  
+	cJSON_AddStringToObject(pItem, "uart", buff);
     cJSON_AddItemToArray(pArray, pItem);
 
 
@@ -329,7 +329,7 @@ static int set_uartCmd(Webs* wp)
         ret = uart_write(num,cmd,strlen(cmd));
         printf("uart write cmd = %s ret = %d\n",cmd,ret);
     }
-    
+
     return 0;
 }
 
@@ -351,7 +351,7 @@ static int set_nodepower(Webs* wp)
         if(NULL!=node && atoi(node)!=get_node_power(i))
         {
             node_power(i,atoi(node));
-            printf("set node %d,var = %d\n",i,atoi(node));        
+            printf("set node %d,var = %d\n",i,atoi(node));
         }
     }
     return 0;
@@ -368,7 +368,7 @@ static int set_network(Webs* wp)
             RTL_Reset();
         }
     }
-    
+
     return 0;
 }
 
@@ -512,7 +512,7 @@ static void uploadFirmware(Webs *wp)
 
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "text/plain");
+	websWriteHeader(wp, "Content-Type", "application/json");
 //	websWriteEndHeaders(wp);
 
     websWriteEndHeaders(wp);
@@ -532,7 +532,7 @@ static void uploadFirmware(Webs *wp)
     websDone(wp);
 	printf("upload Filename=%s\n",up->clientFilename);
     swupdate_cmd();
-	
+
 }
 
 static void bmcdemo(Webs *wp)
@@ -551,7 +551,7 @@ static void bmcdemo(Webs *wp)
 
     websSetStatus(wp, 200);
     websWriteHeaders(wp, -1, 0);
-    websWriteHeader(wp, "Content-Type", "text/plain");
+    websWriteHeader(wp, "Content-Type", "application/json");
     websWriteEndHeaders(wp);
 
     if(NULL==pOpt || NULL == pType)
@@ -559,7 +559,7 @@ static void bmcdemo(Webs *wp)
         app_webS_PrintJsonErr(wp,400,"opt type error");
         return;
     }
-    
+
     if(strcasecmp(pOpt,"get") == 0)
     {
         printf("this get\n");
