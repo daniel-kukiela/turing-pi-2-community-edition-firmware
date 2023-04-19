@@ -34,23 +34,33 @@
 #define INFO_Printf(str,...)   	printf(B_GREEN("[INFO]")"%s(%d)[%s]: " str ,__FILE__, __LINE__,__FUNCTION__,##__VA_ARGS__)
 #define WARN_Printf(str,...)   	printf(B_YELLOW("[WARN]")"%s(%d)[%s]: " str ,__FILE__, __LINE__,__FUNCTION__,##__VA_ARGS__)
 
+#define POWER_OFF 0
+#define POWER_ON 1
+#define POWER_STATUS 2
+
+#define NO_NODE_SELECTED -1
+
 
 
 char host[64] = {0};
 
 
-
-bool power(int arg)
+bool set_power(int state, int node)
 {
     char cmd[128] = {0};
-    if(arg==1)
-        sprintf(cmd,"curl 'http://%s/api/bmc?opt=set&type=power&node1=1&node2=1&node3=1&node4=1'",host);
-    else if(0==arg)
-        sprintf(cmd,"curl 'http://%s/api/bmc?opt=set&type=power&node1=0&node2=0&node3=0&node4=0'",host);
-    else if(2 == arg)
-    {
-        sprintf(cmd,"curl 'http://%s/api/bmc?opt=get&type=power'",host);
-    }
+    char node_query_param[128] = {0};
+    if (node==NO_NODE_SELECTED)
+        sprintf(node_query_param, "&node1=%d&node2=%d&node3=%d&node4=%d", state, state, state, state);
+    else
+        sprintf(node_query_param, "&node%d=%d", node, state);
+
+    sprintf(cmd,"curl 'http://%s/api/bmc?opt=set&type=power%s'", host, node_query_param);
+    system(cmd);
+}
+bool get_power()
+{
+    char cmd[128] = {0};
+    sprintf(cmd,"curl 'http://%s/api/bmc?opt=get&type=power'", host);
     system(cmd);
 }
 
@@ -285,9 +295,9 @@ void usage(void)
     printf("Usage: tpi [host] <options...>\n");
     printf("Options: \n");
 
-    printf("\t-p, --power        (on off status) Power management \n");
-    printf("\t-u, --usb          (host device status) USB mode,Must be used with the node command\n");
-    printf("\t-n, --node         (1 2 3 4) USB selected node\n");
+    printf("\t-p, --power        (on off status) Power management. Can be used with the node option for controling only one node\n");
+    printf("\t-u, --usb          (host device status) USB mode,Must be used with the node option\n");
+    printf("\t-n, --node         (1 2 3 4) selected node\n");
     printf("\t-r, --resetsw       reset switch\n");
     printf("\t-U, --uart         uart opt get or set\n");
     printf("\t-C, --cmd          uart set cmd\n");
@@ -295,8 +305,9 @@ void usage(void)
     printf("\t-f, --flash        todo\n");
     printf("\t-h, --help         usage\n");
     printf("example: \n");
-    printf("\t$ tpi -p on //power on\n");
-    printf("\t$ tpi -p off //power off\n");
+    printf("\t$ tpi -p on //power all nodes on\n");
+    printf("\t$ tpi -p off //power all nodes off\n");
+    printf("\t$ tpi -p off -n 1//power node 1 off\n");
     printf("\t$ tpi -u host -n 1 //USB uses host mode to connect to Node1\n");
     printf("\t$ tpi --uart=get -n 1 //get node1 uart info\n");
     printf("\t$ tpi --uart=set -n 1 --cmd=ls//set node1 uart cmd\n");
@@ -344,15 +355,15 @@ int main(int argc, char *argv[])
                 mode = 0;
                 if(strcasecmp(optarg,"off") == 0)
                 {
-                    power_cmd = 0;
+                    power_cmd = POWER_OFF;
                 }
                 else if(strcasecmp(optarg,"on") == 0)
                 {
-                    power_cmd = 1;
+                    power_cmd = POWER_ON;
                 }
                 else if(strcasecmp(optarg,"status") == 0)
                 {
-                    power_cmd = 2;
+                    power_cmd = POWER_STATUS;
                 }
                 else
                     usage();
@@ -441,7 +452,10 @@ int main(int argc, char *argv[])
     {
         case 0:
         {
-            power(power_cmd);
+            if (power_cmd==POWER_STATUS)
+                get_power();
+            else
+                set_power(power_cmd, node);
             break;
         }
         case 1:
