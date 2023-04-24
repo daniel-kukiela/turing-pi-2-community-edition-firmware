@@ -2,7 +2,7 @@
 
 date=`date +%F`
 
-version="0.2.0-wip"
+version=$(cat "VERSION")
 
 if [ ! -d "build/${date}" ];then
     echo "mkdir build/${date}"
@@ -22,7 +22,7 @@ cd buildroot/output/images/
 ./genSWU.sh
 cd -
 
-cp -rf ./buildroot/output/images/turing_pi2_ce-${version}.swu ./build/${date}/turing_pi2_ce-${version}.swu
+cp -rf ./buildroot/output/images/turing_pi_2_ce-${version}.swu ./build/${date}/turing_pi2_ce-${version}.swu
 
 echo "build turing pi firmware over"
 
