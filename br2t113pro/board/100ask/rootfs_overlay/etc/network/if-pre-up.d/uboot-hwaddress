@@ -1,0 +1,42 @@
+#!/bin/sh
+set -e
+
+# uses fw_printenv and fw_setenv to persist a mac address
+
+#- example environment 
+#   METHOD=dhcp
+#   MODE=start
+#   PHASE=pre-up
+#   ADDRFAM=inet
+#   IFACE=eth0
+
+IF_UBOOT_HWADDRESS="mac_$IFACE" 
+    
+get_MAC() {
+  MAC="$(fw_printenv | grep -E "^$IF_UBOOT_HWADDRESS=[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}:[a-fA-F0-9]{2}$")"
+  MAC="${MAC#$IF_UBOOT_HWADDRESS=}"
+}
+
+set_MAC() {
+  ip link set down dev "$IFACE"
+  ip link set addr "$MAC" dev "$IFACE"
+  echo "$IFACE: set mac address $MAC" >&2
+}
+
+case "$MODE:$PHASE:$IFACE" in
+  start:pre-up:eth* ) # do this only for hardware interfaces
+    get_MAC || :
+    if [ -z "$MAC" ]; then
+      #- no valid MAC found generate and set a fresh one
+      head -c 6 /dev/urandom | hexdump -C | ( 
+        read _ a b c d e f _
+        a="${a%?}$( echo -n "${a#?}" | tr 0123456789abcdef 22226666aaaaeeee )"
+        MAC="$a:$b:$c:$d:$e:$f"
+        fw_setenv "$IF_UBOOT_HWADDRESS" "$MAC"
+        echo "$IFACE: persisted mac address $MAC in UBoot" >&2
+      )
+      get_MAC
+    fi
+    set_MAC
+    ;; 
+esac
